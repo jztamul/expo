@@ -115,19 +115,36 @@ export function resolveConfigPluginFunctionWithInfo(projectRoot: string, pluginR
   try {
     result = requirePluginFile(pluginFile);
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      const learnMoreLink = `Learn more: https://docs.expo.dev/guides/config-plugins/#creating-a-plugin`;
-      // If the plugin reference is a node module, and that node module has a syntax error, then it probably doesn't have an official config plugin.
-      if (!isPluginFile && !moduleNameIsDirectFileReference(pluginReference)) {
-        const pluginError = new PluginError(
-          `Package "${pluginReference}" does not contain a valid config plugin.\n${learnMoreLink}\n\n${error.message}`,
-          'INVALID_PLUGIN_IMPORT'
-        );
-        pluginError.stack = error.stack;
-        throw pluginError;
-      }
+    const learnMoreLink = 'Learn more: https://docs.expo.dev/guides/config-plugins/';
+
+    let underlyingError: string;
+    let stack: string | undefined;
+
+    if (error instanceof Error) {
+      const errorWithCode = error as Error & { code?: string };
+      underlyingError = `${errorWithCode.message} ${errorWithCode.code ?? ''}`;
+      stack = errorWithCode.stack;
+    } else {
+      underlyingError = String(error);
     }
-    throw error;
+
+    let errorMessage = `Unable to resolve a valid config plugin for "${pluginReference}".\n`;
+
+    if (!isPluginFile) {
+      errorMessage += `Config plugins are typically exported from an "${pluginFileName}" file in the package root, but "${pluginReference}" does not have this file.\n\n`;
+    }
+
+    errorMessage +=
+      `Found "${pluginFile}" but an error was thrown while importing it.\n` +
+      `Verify that ${pluginReference} includes a config plugin. If it does not, then remove the entry from plugins in your app config file.\n\n` +
+      `The underlying error was: ${underlyingError}\n${learnMoreLink}`;
+
+    const pluginError = new PluginError(errorMessage, 'INVALID_PLUGIN_IMPORT');
+
+    if (stack) {
+      pluginError.stack = stack;
+    }
+    throw pluginError;
   }
 
   const plugin = resolveConfigPluginExport({
@@ -165,7 +182,7 @@ export function resolveConfigPluginExport({
     plugin = plugin.default;
   }
   if (typeof plugin !== 'function') {
-    const learnMoreLink = `Learn more: https://docs.expo.dev/guides/config-plugins/#creating-a-plugin`;
+    const learnMoreLink = `Learn more: https://docs.expo.dev/guides/config-plugins/`;
     // If the plugin reference is a node module, and that node module does not export a function then it probably doesn't have a config plugin.
     if (!isPluginFile && !moduleNameIsDirectFileReference(pluginReference)) {
       throw new PluginError(
