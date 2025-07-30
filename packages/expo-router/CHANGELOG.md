@@ -37,6 +37,7 @@
 
 - Create href preview component ([#37335](https://github.com/expo/expo/pull/37335) by [@Ubax](https://github.com/Ubax))
 - Add formsheet warning ([#37982](https://github.com/expo/expo/pull/37982) by [@Ubax](https://github.com/Ubax))
+- Move not-found and site map to root stack navigator ([#38417](https://github.com/expo/expo/pull/38417) by [@Ubax](https://github.com/Ubax))
 
 
 ## 5.1.4 - 2025-07-18

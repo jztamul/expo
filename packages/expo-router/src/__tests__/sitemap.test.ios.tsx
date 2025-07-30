@@ -1,16 +1,21 @@
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { router } from '../imperative-api';
 import { act, fireEvent, renderRouter, screen, waitFor, within } from '../testing-library';
 import { Slot } from '../views/Navigator';
 
-test('given no routes, unmatched route', () => {
+test('given no routes, renders no route', () => {
   renderRouter({
-    _layout: () => <Slot />,
+    _layout: () => (
+      <View testID="layout">
+        <Slot />
+      </View>
+    ),
   });
   act(() => router.replace('/_sitemap'));
   expect(screen).toHavePathname('/_sitemap');
-  expect(screen.getByText('Unmatched Route')).toBeOnTheScreen();
+  expect(screen.getByTestId('expo-router-sitemap')).toBeOnTheScreen();
+  expect(screen.getByTestId('expo-router-sitemap')).toHaveTextContent('');
 });
 
 test('given single index route, renders one route', () => {
